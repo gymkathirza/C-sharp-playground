@@ -17,6 +17,12 @@ describe("vfs", () => {
     expect("error" in json).toBe(false);
   });
 
+  it("rejects empty file names and slashes in the name", () => {
+    expect("error" in addFile(starterVfs(), "", "", "cs")).toBe(true);
+    expect("error" in addFile(starterVfs(), "", "Models/User", "cs")).toBe(true);
+    expect(starterVfs().files["Models/User.cs"]).toBeUndefined();
+  });
+
   it("rejects duplicate file", () => {
     expect("error" in addFile(starterVfs(), "", "Program", "cs")).toBe(true);
   });

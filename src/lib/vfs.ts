@@ -66,6 +66,8 @@ export function addFile(
   content = "",
 ): Vfs | { error: string } {
   if (fileCount(vfs) >= MAX_FILES) return { error: `At most ${MAX_FILES} files` };
+  const nameErr = validateSegment(name);
+  if (nameErr) return { error: nameErr };
   const path = joinPosix(parent, `${name}.${ext}`);
   const pathErr = validateFilePath(path);
   if (pathErr) return { error: pathErr };
@@ -91,6 +93,8 @@ export function renameFile(vfs: Vfs, path: string, newName: string): Vfs | { err
   const pathErr = validateFilePath(next);
   if (pathErr) return { error: pathErr };
   if (next !== path && vfs.files[next] !== undefined) return { error: "File already exists" };
+  const nextDir = parentDir(next);
+  if (nextDir && !vfs.folders.includes(nextDir)) return { error: "Parent folder missing" };
   const files = { ...vfs.files };
   delete files[path];
   files[next] = content;

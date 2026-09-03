@@ -44,7 +44,7 @@ export function validateFilePath(path: string): string | null {
   if (!/\.(cs|csproj|json|txt|md)$/.test(file)) {
     return "Only .cs, .csproj, .json, .txt, .md files are allowed";
   }
-  return null;
+  return validateSegment(stemOf(file));
 }
 
 export function fileExt(path: string): CsFileExt | null {

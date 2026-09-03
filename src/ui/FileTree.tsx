@@ -4,17 +4,19 @@ import { parentDir } from "../lib/paths";
 
 type Props = {
   vfs: Vfs;
-  selected: string | null;
+  selectedFile: string | null;
+  selectedFolder: string;
   onSelectFile: (path: string) => void;
   onSelectFolder: (path: string) => void;
 };
 
 function basename(path: string): string {
+  if (!path) return "Project";
   const i = path.lastIndexOf("/");
   return i === -1 ? path : path.slice(i + 1);
 }
 
-export function FileTree({ vfs, selected, onSelectFile, onSelectFolder }: Props) {
+export function FileTree({ vfs, selectedFile, selectedFolder, onSelectFile, onSelectFolder }: Props) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [focus, setFocus] = useState<string>("");
   const treeRef = useRef<HTMLUListElement>(null);
@@ -26,7 +28,7 @@ export function FileTree({ vfs, selected, onSelectFile, onSelectFolder }: Props)
   }, [focus]);
 
   const items = useMemo(() => {
-    const out: { id: string; kind: "file" | "folder"; level: number }[] = [];
+    const out: { id: string; kind: "file" | "folder"; level: number }[] = [{ id: "", kind: "folder", level: 1 }];
     const walk = (parent: string, level: number) => {
       const { folders, files } = childrenOf(vfs, parent);
       for (const f of folders) {
@@ -35,7 +37,7 @@ export function FileTree({ vfs, selected, onSelectFile, onSelectFolder }: Props)
       }
       for (const f of files) out.push({ id: f, kind: "file", level });
     };
-    walk("", 1);
+    if (expanded[""] !== false) walk("", 2);
     return out;
   }, [vfs, expanded]);
 
@@ -86,11 +88,12 @@ export function FileTree({ vfs, selected, onSelectFile, onSelectFolder }: Props)
       {items.map((item) => {
         const isFolder = item.kind === "folder";
         const isExpanded = isFolder ? expanded[item.id] !== false : undefined;
-        const isSelected = selected === item.id;
-        const tabIndex = (focus || items[0]?.id) === item.id ? 0 : -1;
+        const isSelected = item.kind === "file" ? selectedFile === item.id : selectedFolder === item.id;
+        const tabId = items.some((i) => i.id === focus) ? focus : (items[0]?.id ?? "");
+        const tabIndex = tabId === item.id ? 0 : -1;
         return (
           <li
-            key={item.id}
+            key={item.id || "project-root"}
             role="treeitem"
             aria-expanded={isFolder ? isExpanded : undefined}
             aria-selected={isSelected}

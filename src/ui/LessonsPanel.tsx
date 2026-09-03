@@ -26,17 +26,17 @@ export function LessonsPanel({ activeLesson, onSelectLesson }: Props) {
       {!collapsed && (
         <div role="list" aria-label="Learning lessons">
           {LESSONS.map((lesson) => (
-            <button
-              key={lesson.id}
-              type="button"
-              className={`lesson-btn ${activeLesson === lesson.id ? "active" : ""}`}
-              role="listitem"
-              aria-current={activeLesson === lesson.id ? "true" : undefined}
-              onClick={() => onSelectLesson(lesson)}
-              title={lesson.description}
-            >
-              {lesson.title}
-            </button>
+            <div key={lesson.id} role="listitem">
+              <button
+                type="button"
+                className={`lesson-btn ${activeLesson === lesson.id ? "active" : ""}`}
+                aria-current={activeLesson === lesson.id ? "true" : undefined}
+                onClick={() => onSelectLesson(lesson)}
+                title={lesson.description}
+              >
+                {lesson.title}
+              </button>
+            </div>
           ))}
         </div>
       )}

@@ -35,6 +35,11 @@ describe("paths", () => {
     expect(validateFilePath("a//b.cs")).not.toBeNull();
   });
 
+  it("rejects empty file stems", () => {
+    expect(validateFilePath(".cs")).not.toBeNull();
+    expect(validateFilePath(".csproj")).not.toBeNull();
+  });
+
   it("validateSegment rejects slashes and empty names", () => {
     expect(validateSegment("a/b")).not.toBeNull();
     expect(validateSegment("")).not.toBeNull();

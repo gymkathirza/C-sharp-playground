@@ -16,7 +16,7 @@ import { CreateDialog } from "./ui/CreateDialog";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { applyChannelToCsproj, enabledChannels, parseManifest, type Channel } from "./lib/versions";
 import type { Lesson } from "./lib/lessons";
-import type { CsFileExt } from "./lib/paths";
+import { parentDir, type CsFileExt } from "./lib/paths";
 
 const MANIFEST_URL = `${import.meta.env.BASE_URL}version-manifest.json`;
 const PHASE1_RUN =
@@ -77,6 +77,7 @@ export function App() {
   const openFile = (path: string) => {
     setActiveTab(path);
     setOpenTabs((tabs) => (tabs.includes(path) ? tabs : [...tabs, path]));
+    setFolder(parentDir(path));
   };
 
   const closeTab = (path: string) => {
@@ -190,7 +191,8 @@ export function App() {
             </div>
             <FileTree
               vfs={vfs}
-              selected={activeTab ?? folder}
+              selectedFile={activeTab}
+              selectedFolder={folder}
               onSelectFile={openFile}
               onSelectFolder={setFolder}
             />
