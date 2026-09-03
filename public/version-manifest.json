@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-03T00:00:00Z",
+  "channels": [
+    { "id": "net6-csharp10", "sdk": "6.0", "language": "10", "status": "stable", "enabled": true, "verifiedAt": "2026-09-03T00:00:00Z" },
+    { "id": "net7-csharp11", "sdk": "7.0", "language": "11", "status": "stable", "enabled": true, "verifiedAt": "2026-09-03T00:00:00Z" },
+    { "id": "net8-csharp12", "sdk": "8.0", "language": "12", "status": "stable", "enabled": true, "verifiedAt": "2026-09-03T00:00:00Z" },
+    { "id": "net9-csharp13", "sdk": "9.0", "language": "13", "status": "stable", "enabled": true, "verifiedAt": "2026-09-03T00:00:00Z" },
+    { "id": "net10-csharp14", "sdk": "10.0", "language": "14", "status": "stable", "enabled": true, "verifiedAt": "2026-09-03T00:00:00Z" },
+    { "id": "net-preview", "sdk": "preview", "language": "preview", "status": "preview", "enabled": false, "verifiedAt": null }
+  ]
+}
