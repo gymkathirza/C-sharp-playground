@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
-import { java } from "@codemirror/lang-java";
+import { csharp } from "@replit/codemirror-lang-csharp";
+import { autocompletion } from "@codemirror/autocomplete";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
 import { Group, Panel, Separator, useDefaultLayout } from "react-resizable-panels";
 import { addFile, addFolder, starterVfs, writeFile, type Vfs } from "./lib/vfs";
 import { clearSessionStore, defaultSession, loadSession, saveSession } from "./lib/session";
 import { downloadBlob, vfsToZip } from "./lib/zip";
+import { csharpCompletions } from "./lib/completions";
+import { mountSandbox, prepareRun } from "./lib/runner";
 import { FileTree } from "./ui/FileTree";
 import { EditorTabs } from "./ui/EditorTabs";
 import { ConsolePanel, type ConsoleLine } from "./ui/ConsolePanel";
@@ -19,8 +22,6 @@ import type { Lesson } from "./lib/lessons";
 import { parentDir, type CsFileExt } from "./lib/paths";
 
 const MANIFEST_URL = `${import.meta.env.BASE_URL}version-manifest.json`;
-const PHASE1_RUN =
-  "▶ Run is not yet available in the browser. Export your project and run with `dotnet run`.";
 
 export function App() {
   const loaded = useRef(loadSession());
@@ -36,6 +37,10 @@ export function App() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedVersion, setSelectedVersion] = useState<string>(loaded.current.session.selectedVersion);
   const [activeLesson, setActiveLesson] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const nonce = useRef(0);
+  const sandboxReady = useRef(false);
+  const sandbox = useRef<ReturnType<typeof mountSandbox> | null>(null);
 
   useEffect(() => {
     if (restored.current) {
@@ -73,6 +78,39 @@ export function App() {
   useEffect(() => {
     persist();
   }, [vfs, openTabs, activeTab, selectedVersion, persist]);
+
+  const execute = useCallback((files: Record<string, string>) => {
+    const prepared = prepareRun(files);
+    if ("error" in prepared) {
+      setLines([{ kind: "error", text: prepared.error }]);
+      return;
+    }
+    nonce.current += 1;
+    const n = nonce.current;
+    setBusy(true);
+    setLines([{ kind: "system", text: "Starting browser C# runtime…" }]);
+    sandbox.current?.destroy();
+    sandboxReady.current = false;
+    sandbox.current = mountSandbox(
+      (line, lineNonce) => {
+        if (lineNonce !== nonce.current) return;
+        setLines((prev) => [...prev.filter((l) => l.kind !== "system" || !l.text.startsWith("Starting")), line]);
+      },
+      () => {
+        sandboxReady.current = true;
+        sandbox.current?.run({ type: "run", nonce: n, code: prepared.code });
+      },
+      (doneNonce) => {
+        if (doneNonce === nonce.current) setBusy(false);
+      },
+    );
+  }, []);
+
+  const runActive = useCallback(() => {
+    execute(vfs.files);
+  }, [execute, vfs.files]);
+
+  useEffect(() => () => sandbox.current?.destroy(), []);
 
   const openFile = (path: string) => {
     setActiveTab(path);
@@ -126,14 +164,15 @@ export function App() {
 
   const extensions = useMemo(
     () => [
-      java(),
+      csharp(),
+      autocompletion({ override: [csharpCompletions(vfs.files)] }),
       EditorView.theme({
         "&": { fontSize: "14px" },
         ".cm-scroller": { fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" },
       }),
       oneDark,
     ],
-    [],
+    [vfs.files],
   );
 
   const source = activeTab ? (vfs.files[activeTab] ?? "") : "";
@@ -148,12 +187,12 @@ export function App() {
         <button
           type="button"
           className="primary"
-          disabled={!activeTab}
-          aria-label="Run (not available in browser)"
-          title={PHASE1_RUN}
-          onClick={() => setLines([{ kind: "system", text: PHASE1_RUN }])}
+          disabled={!activeTab || busy}
+          aria-label="Run C# in the browser sandbox"
+          title="Compiles and runs a console app in a sandboxed WebAssembly runtime"
+          onClick={runActive}
         >
-          ▶ Run
+          {busy ? "Running…" : "▶ Run"}
         </button>
         <button
           type="button"
